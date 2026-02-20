@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Diet Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --bg:       #f7f4ef;
+      --surface:  #ffffff;
+      --border:   #e3ddd3;
+      --text:     #2b2620;
+      --muted:    #9a9189;
+      --accent:   #c07850;
+      --accent2:  #7a9e7e;
+      --accent3:  #5b82a6;
+      --tag-b:    #fff3ec;
+      --tag-f:    #ecf4ec;
+      --tag-d:    #edf2f8;
+      --radius:   14px;
+      --gap:      14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Header ────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    header p.week-label {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: .35rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .accent-line {
+      width: 48px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+      margin: .75rem auto 0;
+    }
+
+    /* ── Calendar grid ─────────────────────────────────────── */
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: var(--gap);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      .calendar { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .calendar { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 380px) {
+      .calendar { grid-template-columns: 1fr; }
+    }
+
+    /* ── Day card ──────────────────────────────────────────── */
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp .45s ease forwards;
+    }
+
+    .day-card:nth-child(1) { animation-delay: .04s; }
+    .day-card:nth-child(2) { animation-delay: .10s; }
+    .day-card:nth-child(3) { animation-delay: .16s; }
+    .day-card:nth-child(4) { animation-delay: .22s; }
+    .day-card:nth-child(5) { animation-delay: .28s; }
+    .day-card:nth-child(6) { animation-delay: .34s; }
+    .day-card:nth-child(7) { animation-delay: .40s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .day-card.today .day-header {
+      background: var(--accent);
+      color: #fff;
+    }
+    .day-card.today .day-header .day-name,
+    .day-card.today .day-header .day-date { color: #fff; }
+
+    .day-header {
+      padding: .65rem .9rem .55rem;
+      background: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: .1rem;
+    }
+    .day-name {
+      font-family: 'Playfair Display', serif;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: .02em;
+    }
+    .day-date {
+      font-size: .72rem;
+      color: rgba(255,255,255,.55);
+      font-weight: 400;
+      letter-spacing: .04em;
+    }
+
+    .meals {
+      padding: .75rem .85rem;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      flex: 1;
+    }
+
+    .meal {
+      display: flex;
+      flex-direction: column;
+      gap: .18rem;
+    }
+
+    .meal-label {
+      font-size: .62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+
+    .meal-tag {
+      display: inline-block;
+      font-size: .78rem;
+      font-weight: 500;
+      padding: .28rem .6rem;
+      border-radius: 6px;
+      line-height: 1.3;
+    }
+
+    .meal-tag.breakfast { background: var(--tag-b); color: #b05a20; }
+    .meal-tag.fruit     { background: var(--tag-f); color: #4a7a4e; }
+    .meal-tag.dinner    { background: var(--tag-d); color: #3a628a; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* ── Loading / Error state ─────────────────────────────── */
+    .status-msg {
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+    .status-msg span { display: block; font-size: 2rem; margin-bottom: .5rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Weekly Plan</h1>
+  <p class="week-label" id="weekLabel">Loading…</p>
+  <div class="accent-line"></div>
+</header>
+
+<main id="calendarRoot">
+  <div class="status-msg"><span>🥗</span>Preparing your plan…</div>
+</main>
+
+<!-- Supabase JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG – fill in your Supabase project details
+// ═══════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://flkyerzpnlmctiisiuqt.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_NjnOPPDYV94HwZ12MY0S1A_44P2nbI7';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ═══════════════════════════════════════════════════════════
+//  MEAL LISTS  (edit freely)
+// ═══════════════════════════════════════════════════════════
+const BREAKFASTS = [
+  { protein: 'Scrambled Eggs', side: 'Whole-grain toast' },
+  { protein: 'Greek Yogurt', side: 'Granola & honey' },
+  { protein: 'Omelette', side: 'Sautéed spinach' },
+  { protein: 'Smoked Salmon', side: 'Rye crackers' },
+  { protein: 'Cottage Cheese', side: 'Sliced tomatoes' },
+  { protein: 'Boiled Eggs', side: 'Avocado toast' },
+  { protein: 'Tuna', side: 'Rice cakes' },
+];
+
+const FRUITS = [
+  'Apple', 'Banana', 'Orange', 'Pear', 'Peach',
+  'Grapes', 'Kiwi', 'Mango', 'Strawberries', 'Watermelon',
+  'Plum', 'Pineapple', 'Blueberries', 'Cherries',
+];
+
+const DINNERS = [
+  { protein: 'Grilled Chicken', side: 'Steamed broccoli & quinoa' },
+  { protein: 'Baked Salmon', side: 'Asparagus & brown rice' },
+  { protein: 'Turkey Meatballs', side: 'Zucchini noodles' },
+  { protein: 'Lentil Soup', side: 'Whole-grain bread' },
+  { protein: 'Shrimp Stir-fry', side: 'Jasmine rice & bok choy' },
+  { protein: 'Beef Steak', side: 'Sweet potato & green beans' },
+  { protein: 'Baked Cod', side: 'Roasted cherry tomatoes & couscous' },
+  { protein: 'Chicken Curry', side: 'Cauliflower rice' },
+  { protein: 'Tofu Scramble', side: 'Mixed roasted veggies' },
+];
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/** Returns the Sunday that starts the week containing `date` */
+function weekStart(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay()); // getDay() returns 0 for Sunday
+  return d;
+}
+
+function toISO(date) { return date.toISOString().split('T')[0]; }
+
+function formatRange(sun) {
+  const sat = new Date(sun); sat.setDate(sat.getDate() + 6);
+  return `${sun.getDate()} ${MONTHS[sun.getMonth()]} – ${sat.getDate()} ${MONTHS[sat.getMonth()]} ${sat.getFullYear()}`;
+}
+
+/** Generate a fresh 7-day plan */
+function generatePlan() {
+  return Array.from({ length: 7 }, () => ({
+    breakfast: pick(BREAKFASTS),
+    fruit:     pick(FRUITS),
+    dinner:    pick(DINNERS),
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SUPABASE I/O
+// ═══════════════════════════════════════════════════════════
+async function fetchPlan(weekStartISO) {
+  const { data, error } = await db
+    .from('diet_plans')
+    .select('plan')
+    .eq('week_start', weekStartISO)
+    .single();
+  if (error && error.code !== 'PGRST116') console.error(error);
+  return data?.plan ?? null;
+}
+
+async function savePlan(weekStartISO, plan) {
+  const { error } = await db
+    .from('diet_plans')
+    .upsert({ week_start: weekStartISO, plan }, { onConflict: 'week_start' });
+  if (error) console.error('Save error:', error);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function renderCalendar(plan, weekSun, todayDate) {
+  const root = document.getElementById('calendarRoot');
+  document.getElementById('weekLabel').textContent = formatRange(weekSun);
+
+  const grid = document.createElement('div');
+  grid.className = 'calendar';
+
+  plan.forEach((day, i) => {
+    const dayDate = new Date(weekSun);
+    dayDate.setDate(dayDate.getDate() + i);
+    const isToday = toISO(dayDate) === toISO(todayDate);
+
+    const card = document.createElement('div');
+    card.className = 'day-card' + (isToday ? ' today' : '');
+
+    card.innerHTML = `
+      <div class="day-header">
+        <span class="day-name">${DAY_NAMES[i]}</span>
+        <span class="day-date">${dayDate.getDate()} ${MONTHS[dayDate.getMonth()]}</span>
+      </div>
+      <div class="meals">
+        <div class="meal">
+          <span class="meal-label">Breakfast</span>
+          <span class="meal-tag breakfast">${day.breakfast.protein}</span>
+          <span class="meal-tag breakfast" style="opacity:.75">${day.breakfast.side}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="meal">
+          <span class="meal-label">Mid-day Fruit</span>
+          <span class="meal-tag fruit">${day.fruit}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="meal">
+          <span class="meal-label">Dinner</span>
+          <span class="meal-tag dinner">${day.dinner.protein}</span>
+          <span class="meal-tag dinner" style="opacity:.75">${day.dinner.side}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  root.innerHTML = '';
+  root.appendChild(grid);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN LOGIC
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  const today        = new Date();
+  const isSaturday   = today.getDay() === 6;
+
+  // Determine which week to show
+  // – On Saturday: generate/show NEXT week's plan
+  // – Any other day: show CURRENT week's plan
+  const targetDate   = isSaturday ? (() => { const d = new Date(today); d.setDate(d.getDate() + 1); return d; })() : today;
+  const sun          = weekStart(targetDate);
+  const sunISO       = toISO(sun);
+
+  let plan = await fetchPlan(sunISO);
+
+  if (!plan) {
+    if (isSaturday) {
+      // Auto-generate and save next week's plan
+      plan = generatePlan();
+      await savePlan(sunISO, plan);
+    } else {
+      // No plan exists for current week — try generating one (fallback)
+      plan = generatePlan();
+      await savePlan(sunISO, plan);
+    }
+  }
+
+  renderCalendar(plan, sun, today);
+}
+
+init().catch(err => {
+  document.getElementById('calendarRoot').innerHTML =
+    `<div class="status-msg"><span>⚠️</span>${err.message}</div>`;
+});
+</script>
+</body>
+</html>
